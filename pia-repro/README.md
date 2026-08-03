@@ -55,6 +55,28 @@ more and the matrix goes uniformly green, at which point a carried-forward resul
 freshly evaluated one look identical — which is exactly what the UI work in AC #2 has to
 be able to distinguish.
 
+### Why these policies cannot be loaded as one bundle
+
+Every file declares `package terraform`, and several reuse rule names — `allowed` appears
+in both `allowed_resource_types.rego` and `require_provider_allowlist.rego`, and
+`work` / `offset` / `hits` appear in all five `slow_scan_*.rego`. Compiled together that is
+a redeclaration error.
+
+It is not a defect. `policy_check.check` (`taco/app/policy/service/policy_check.py:117-120`)
+uploads one module, evaluates `data.terraform.deny`, then removes it before the next:
+
+```python
+for policy in policies:
+    if upload_policy(policy):
+        evaluate_policy(policy)
+    client.remove_policy_module(policy.id)
+```
+
+Isolation is the contract, and real customer policy repos depend on it. So any tooling
+here — `scripts/pia-validate.sh`, the GitHub workflow — must check **one policy at a time
+against `pia-common/`**, never `opa check pia-repro/*.rego`. Both were wrong on the first
+pass and are fixed; if you add tooling, match that shape.
+
 Leave the group on the default `execute_as = policy-check` (post-plan). On a `pre-plan`
 group `input.tfplan` is the empty string (`policy_input.py:317`), so every
 `resource_changes` rule goes undefined and the whole matrix turns green.
@@ -76,9 +98,13 @@ policy group, not just one policy.
 ./scripts/pia-validate.sh          # or: OPA=/path/to/opa ./scripts/pia-validate.sh
 ```
 
-It verifies manifest keys against files both ways, runs `opa check` over the policies and
-`pia-common` together, evaluates every policy against both fixtures, and times the
-`slow_scan_*` set. Expected: `pia-01-dev` fails 2 policies, `pia-05` fails 5.
+It verifies manifest keys against files both ways, runs `opa check` on each policy
+individually against `pia-common/` (see "Why these policies cannot be loaded as one
+bundle" above), evaluates every policy against both fixtures, and times the `slow_scan_*`
+set. Expected: `pia-01-dev` fails 2 policies, `pia-05` fails 5.
+
+The GitHub workflow runs the same checks on every push, so CI catches a broken import even
+if you skip this locally.
 
 ### 1. Push the fixture
 

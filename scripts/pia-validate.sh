@@ -37,8 +37,20 @@ done
 echo "  $(wc -w <<<"$keys") manifest entries checked"
 echo
 
-echo "== opa check (policies + common functions together) =="
-"$OPA" check pia-repro/*.rego pia-common/*.rego || fail=1
+echo "== opa check, one policy at a time + pia-common =="
+# NOT `opa check pia-repro/*.rego` -- every policy is `package terraform`, so loading them
+# together redeclares `allowed` (2x) and work/offset/hits (5x across slow_scan_1..5).
+# Scalr uploads one module at a time (policy_check.py:117-120), so those collisions are
+# legal in production and only an artifact of bundling. Check the same way Scalr runs.
+for f in pia-repro/*.rego; do
+	if "$OPA" check "$f" pia-common/ >/dev/null 2>&1; then
+		printf '  ok    %s\n' "$(basename "$f")"
+	else
+		printf '  FAIL  %s\n' "$(basename "$f")"
+		"$OPA" check "$f" pia-common/ 2>&1 | sed 's/^/        /'
+		fail=1
+	fi
+done
 echo
 
 echo "== opa eval: deny per policy, per fixture =="

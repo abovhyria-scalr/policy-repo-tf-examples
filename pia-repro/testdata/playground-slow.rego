@@ -39,7 +39,7 @@
 #
 #     14 policies x 10 runs = 140 evaluations
 #
-# Change one comment in one policy file and Scalr still performs all 180. The ticket asks
+# Change one comment in one policy file and Scalr still performs all 140. The ticket asks
 # for 10 instead (one changed policy x ten runs).
 #
 # Take your time at work = 700 and multiply by 50 -- five slow policies x ten workspaces.
