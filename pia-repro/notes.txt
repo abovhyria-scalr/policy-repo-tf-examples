@@ -1,0 +1,14 @@
+Scratch file. Not a policy, not referenced by scalr-policy.hcl.
+
+Purpose: this is the cleanest single demo of SCALRCORE-38740.
+
+Touch this file, commit, push. Because it lives under the policy group's bound path,
+ABCEventHandler._has_changes_in_path (taco/app/policy/tasks/vcs_event_handlers.py:59)
+sees a change under the prefix and lets the webhook through. A full PIA then runs --
+every enabled policy against every run in scope -- for a commit that changed zero
+policies.
+
+Compare with touching /README.md at the repo root, which the same filter correctly
+suppresses.
+
+  demo counter: 0

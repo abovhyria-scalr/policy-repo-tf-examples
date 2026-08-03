@@ -1,0 +1,165 @@
+{
+  "tfplan": {
+    "format_version": "1.2",
+    "terraform_version": "1.10.6",
+    "resource_changes": [
+      {
+        "address": "random_pet.app",
+        "mode": "managed",
+        "type": "random_pet",
+        "name": "app",
+        "provider_name": "registry.opentofu.org/hashicorp/random",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "length": 2,
+            "separator": "-"
+          },
+          "after_unknown": {
+            "id": true
+          }
+        }
+      },
+      {
+        "address": "random_pet.db",
+        "mode": "managed",
+        "type": "random_pet",
+        "name": "db",
+        "provider_name": "registry.opentofu.org/hashicorp/random",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "length": 2,
+            "separator": "-"
+          },
+          "after_unknown": {
+            "id": true
+          }
+        }
+      },
+      {
+        "address": "random_id.suffix",
+        "mode": "managed",
+        "type": "random_id",
+        "name": "suffix",
+        "provider_name": "registry.opentofu.org/hashicorp/random",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "byte_length": 8
+          },
+          "after_unknown": {
+            "id": true
+          }
+        }
+      },
+      {
+        "address": "random_string.token",
+        "mode": "managed",
+        "type": "random_string",
+        "name": "token",
+        "provider_name": "registry.opentofu.org/hashicorp/random",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "length": 16,
+            "special": false
+          },
+          "after_unknown": {
+            "id": true
+          }
+        }
+      },
+      {
+        "address": "null_resource.deploy",
+        "mode": "managed",
+        "type": "null_resource",
+        "name": "deploy",
+        "provider_name": "registry.opentofu.org/hashicorp/null",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "triggers": null
+          },
+          "after_unknown": {
+            "id": true
+          }
+        }
+      },
+      {
+        "address": "null_resource.migrate",
+        "mode": "managed",
+        "type": "null_resource",
+        "name": "migrate",
+        "provider_name": "registry.opentofu.org/hashicorp/null",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "triggers": null
+          },
+          "after_unknown": {
+            "id": true
+          }
+        }
+      }
+    ],
+    "configuration": {
+      "provider_config": {
+        "random": {
+          "name": "random",
+          "version_constraint": "~> 3.6"
+        },
+        "null": {
+          "name": "null",
+          "version_constraint": "~> 3.2"
+        }
+      }
+    }
+  },
+  "tfrun": {
+    "workspace": {
+      "name": "pia-05",
+      "description": null,
+      "auto_apply": false,
+      "working_directory": "pia-terraform",
+      "environment_type": "development",
+      "tags": [],
+      "module": null,
+      "terragrunt": null,
+      "state_from_unmerged_pr": false,
+      "provider_configurations": [],
+      "iac_platform": "tofu"
+    },
+    "environment": {
+      "id": "env-v0ord4r0sthdi9es5",
+      "name": "tfenv1"
+    },
+    "vcs": null,
+    "cost_estimate": null,
+    "source": "vcs",
+    "message": "wip",
+    "is_destroy": false,
+    "is_dry": false,
+    "created_by": null,
+    "shell_variables": [],
+    "providers": null
+  }
+}
