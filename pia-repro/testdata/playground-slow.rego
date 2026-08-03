@@ -48,7 +48,7 @@
 
 package terraform
 
-import rego.v1
+import future.keywords
 
 # Tunable. See the scaling table above.
 work := 700

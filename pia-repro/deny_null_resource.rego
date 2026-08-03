@@ -5,7 +5,7 @@
 # Append a comment line, commit, push -- see pia-repro/README.md step 5.
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	some rc in input.tfplan.resource_changes

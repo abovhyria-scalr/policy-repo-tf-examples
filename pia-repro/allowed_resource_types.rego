@@ -2,7 +2,7 @@
 # Against pia-terraform: FAILS (2x null_resource).
 package terraform
 
-import rego.v1
+import future.keywords
 
 allowed := {"random_pet", "random_id", "random_string"}
 

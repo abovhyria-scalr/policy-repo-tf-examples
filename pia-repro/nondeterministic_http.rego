@@ -6,7 +6,7 @@
 # Enable this one to demonstrate the problem; leave it off for timing runs.
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	resp := http.send({

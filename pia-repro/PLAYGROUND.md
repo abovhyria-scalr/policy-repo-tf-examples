@@ -63,7 +63,7 @@ plus a rule called **`deny`**:
 ```rego
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	some rc in input.tfplan.resource_changes
@@ -226,7 +226,7 @@ instead, the message on the group will name the bad import.
 
 | Symptom | Likely cause |
 |---|---|
-| `rego_parse_error` | the `Rego (v1)` dropdown is set to v0. These files use v1 syntax (`if`, `contains`, `in`) |
+| `rego_parse_error: var cannot be used for rule name` | the OPA reading the file is too old to know the `contains` / `if` keywords. In the Playground, set the dropdown to `Rego (v1)`. In Scalr, the policy group's OPA version is below 0.42 |
 | A rule you expected to fail isn't in `deny` | typo in a field path — undefined counts as a pass (Part 2) |
 | `undefined function data.pia...` | you pasted a fixture file from `pia-repro/` instead of `playground-all.rego`. Those reference the separate helper folder |
 | Check B output is empty, or the Playground hangs | evaluation cap — lower `work`. Also check your copy has `hits`, not `pairs` |

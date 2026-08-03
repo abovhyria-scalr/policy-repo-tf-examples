@@ -13,7 +13,7 @@
 # oom_heavy/ folder in this repo for what that looks like in practice.
 package terraform
 
-import rego.v1
+import future.keywords
 
 work := 700
 

@@ -6,7 +6,7 @@
 package terraform
 
 import data.pia.helpers
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	count(helpers.missing_tags) > 0

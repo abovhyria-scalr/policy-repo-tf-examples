@@ -5,7 +5,7 @@
 # A change here must mark those three policies as changed (AC #3) and nothing else.
 package pia.naming
 
-import rego.v1
+import future.keywords
 
 allowed_suffixes := ["-dev", "-stg", "-prod"]
 

@@ -75,15 +75,43 @@ It verifies manifest keys against files both ways, runs `opa check` over the pol
 `pia-common` together, evaluates every policy against both fixtures, and times the
 `slow_scan_*` set. Expected: `pia-01-dev` fails 4 policies, `pia-05` fails 8.
 
-### 1. Push this branch
+### 1. Push the fixture
+
+Push to **`master`** of your fork. An earlier version of this file said to use a branch;
+`master` is better, and not just for convenience.
 
 ```bash
 cd policy-repo-tf-examples
-git checkout -b pia-repro
 git add pia-repro pia-common pia-terraform scripts
 git commit -m "SCALRCORE-38740 PIA repro fixture"
-git push -u origin pia-repro
+git push
 ```
+
+Why master, not a branch — `ABCPushHandler.handle_push_event`
+(`taco/app/policy/tasks/vcs_event_handlers.py:221`):
+
+```python
+if binding.path and not event.created:
+    if not _has_changes_in_path(binding.path, common_functions_folder):
+        continue        # skip: nothing under our path changed
+```
+
+`event.created` is true for the push that *creates* a branch, and it short-circuits the
+path filter — so the first push to a new branch triggers a full PIA no matter which files
+it touched. That directly confounds the negative-control test in step 6 ("touch the root
+README, expect no group check"). On an existing branch the filter applies from the first
+push onward.
+
+Using master also means the open-PR path works naturally later, since
+`check_for_policy_group` enumerates open PRs against the group's branch
+(`service/policy_group_check.py:243-266`).
+
+**One thing to check if you already had policy groups on this repo:** a push to master
+fires the webhook for every binding on that branch. Groups bound to a specific `path`
+(`aws`, `oom_heavy`, …) are filtered out by the code above. But a group bound to the
+**repository root** — empty path, the monorepo case — has `binding.path` falsy, so the
+filter is skipped and it re-syncs and re-runs PIA on every push. Harmless, but it explains
+any unexpected policy group activity you see after pushing.
 
 ### 2. VCS provider — Account scope → VCS providers
 
@@ -127,7 +155,7 @@ export SCALR_ACCOUNT=acc-svrcncgh453bi8g
 export SCALR_ENV=env-v0ord4r0sthdi9es5
 export SCALR_VCS_PROVIDER=vcs-...
 export SCALR_REPO=abovhyria-scalr/policy-repo-tf-examples
-export SCALR_BRANCH=pia-repro
+export SCALR_BRANCH=master
 
 ./scripts/pia-te-setup.sh 10
 ```
@@ -171,14 +199,24 @@ six workspaces instead of ten.
 | Name | `pia-repro` |
 | VCS provider | the one from step 2 |
 | Repository | `abovhyria-scalr/policy-repo-tf-examples` |
-| Branch | `pia-repro` |
+| Branch | `master` |
 | Path | `pia-repro` |
 | Common functions folder | `pia-common` |
-| OPA version | ≥ 0.59 (the policies use `import rego.v1`) |
+| OPA version | pick the newest offered; anything ≥ 0.42 works |
 | Execute as | leave the default (`policy-check` / post-plan) |
 
 The policy group has no platform setting — OPA evaluates plan JSON, and OpenTofu emits the
 same schema Terraform does. Only the workspaces are OpenTofu.
+
+**On the OPA version dropdown.** Every policy here uses `import future.keywords`, which is
+valid from OPA 0.42 all the way through 1.x (a no-op in 1.x). That was deliberate: this TE
+defaults some groups to **0.55.0**, and `import rego.v1` — the more modern spelling — only
+works from 0.59. Picking the wrong version there does not produce a helpful message; you
+get `rego_parse_error: var cannot be used for rule name`, because an OPA that doesn't know
+the `contains` and `if` keywords reads `deny contains msg if` as three stray variables.
+
+If you see that error on a `pia-repro` policy, the cause is an OPA older than 0.42, not a
+bug in the policy.
 
 `common-functions-folder` is resolved from the **repository root**, not from `path` —
 `os.path.join(repo_dir, vcs_ref.common_functions_folder)` at
@@ -317,6 +355,7 @@ the TE and it's where the regression test for this change belongs.
 ```bash
 # workspaces are unapplied, so nothing to destroy
 ./scripts/pia-measure.sh latest-planned    # list them
-# then delete the policy group and workspaces in the UI, and:
-git push origin --delete pia-repro
 ```
+
+Then delete the policy group and the ten workspaces in the UI. The fixture folders can
+stay on master — they are inert unless a policy group points at `pia-repro`.

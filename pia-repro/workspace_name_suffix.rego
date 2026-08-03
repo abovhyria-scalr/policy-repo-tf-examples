@@ -3,7 +3,7 @@
 # This is the policy that makes the matrix interesting across workspaces.
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	name := input.tfrun.workspace.name

@@ -6,7 +6,7 @@
 # content hash in §4.1 has to cover enabled + enforcement_level, not just rego_code.
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	count(input.tfplan.resource_changes) > 0

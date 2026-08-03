@@ -14,7 +14,7 @@
 # back to Terraform.
 package terraform
 
-import rego.v1
+import future.keywords
 
 allowed := {
 	"registry.opentofu.org/hashicorp/random",

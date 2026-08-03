@@ -3,7 +3,7 @@
 package terraform
 
 import data.pia.helpers
-import rego.v1
+import future.keywords
 
 budget := {
 	"random_pet": 5,

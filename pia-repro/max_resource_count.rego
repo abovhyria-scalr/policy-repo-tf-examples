@@ -2,7 +2,7 @@
 # Against pia-terraform: FAILS (6 resources > 4).
 package terraform
 
-import rego.v1
+import future.keywords
 
 max_resources := 4
 

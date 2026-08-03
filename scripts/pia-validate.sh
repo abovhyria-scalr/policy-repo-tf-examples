@@ -8,8 +8,9 @@
 #     (OpaPolicyGroup._read_policy_rego_code, taco/app/policy/service/policy_group.py:235)
 #
 # Needs the opa binary: https://www.openpolicyagent.org/docs/latest/#running-opa
-# Use the same major version as the policy group's opa-version. These policies use
-# `import rego.v1`, so >= 0.59.
+# These policies use `import future.keywords`, which is valid from OPA 0.42 through 1.x,
+# so any reasonably recent binary will do. Matching the policy group's opa-version exactly
+# is still the safest check.
 #
 # Usage: ./scripts/pia-validate.sh
 #

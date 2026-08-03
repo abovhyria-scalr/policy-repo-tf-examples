@@ -10,7 +10,7 @@
 package pia.helpers
 
 import data.pia.naming
-import rego.v1
+import future.keywords
 
 workspace_name := object.get(input, ["tfrun", "workspace", "name"], "")
 

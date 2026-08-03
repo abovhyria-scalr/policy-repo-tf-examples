@@ -4,7 +4,7 @@
 # show a policy that is dead weight in PIA but meaningful in an in-run check.
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	input.tfrun.is_destroy

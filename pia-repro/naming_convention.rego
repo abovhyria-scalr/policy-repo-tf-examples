@@ -3,7 +3,7 @@
 package terraform
 
 import data.pia.helpers
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	not helpers.workspace_name_ok

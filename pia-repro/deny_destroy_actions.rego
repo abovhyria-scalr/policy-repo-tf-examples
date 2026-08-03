@@ -2,7 +2,7 @@
 # Against pia-terraform: PASSES (fresh state, everything is a create).
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	some rc in input.tfplan.resource_changes

@@ -2,7 +2,7 @@
 # Against pia-terraform: PASSES.
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	pets := [rc | some rc in input.tfplan.resource_changes; rc.type == "random_pet"]

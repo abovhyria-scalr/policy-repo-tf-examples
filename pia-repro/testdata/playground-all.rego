@@ -58,7 +58,7 @@
 
 package terraform
 
-import rego.v1
+import future.keywords
 
 # --- inlined from pia-common/naming.rego (prefix n_) ---------------------------------
 

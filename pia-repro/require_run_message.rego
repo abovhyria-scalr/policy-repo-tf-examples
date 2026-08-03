@@ -2,7 +2,7 @@
 # Against pia-terraform: MIXED, depends on how the run was queued.
 package terraform
 
-import rego.v1
+import future.keywords
 
 deny contains msg if {
 	m := object.get(input, ["tfrun", "message"], "")
