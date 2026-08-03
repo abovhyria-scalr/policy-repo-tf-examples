@@ -11,3 +11,4 @@ deny contains msg if {
 	n > max_resources
 	msg := sprintf("max_resource_count: %d resource changes exceeds the limit of %d", [n, max_resources])
 }
+# one-line change, nothing about the logic
