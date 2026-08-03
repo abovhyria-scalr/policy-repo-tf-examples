@@ -14,7 +14,7 @@ part of this fixture is for, plus two copy-paste checks that take under ten minu
 
 | Path | Role |
 |---|---|
-| `pia-repro/` | policy group path — `scalr-policy.hcl` + 20 policies |
+| `pia-repro/` | policy group path — `scalr-policy.hcl` + 20 policies, 14 enabled |
 | `pia-common/` | common functions folder, deliberately **outside** `pia-repro/` |
 | `pia-terraform/` | throwaway OpenTofu config for the repro workspaces |
 | `pia-repro/testdata/` | two fixture inputs matching the real `tfplan` / `tfrun` shape |
@@ -23,12 +23,11 @@ part of this fixture is for, plus two copy-paste checks that take under ten minu
 | `scripts/pia-measure.sh` | API-side inspection |
 | `scripts/pia-sql.sh` | the queries that actually prove it |
 
-The 20 policies:
+The 20 policies, **14 enabled**:
 
-- **10 cheap, self-contained** — `allowed_resource_types`, `deny_null_resource`,
-  `max_resource_count`, `workspace_name_suffix`, `require_random_pet`,
+- **6 cheap, self-contained** — `max_resource_count`, `workspace_name_suffix`,
   `deny_destroy_actions`, `require_provider_allowlist`, `deny_destroy_run`,
-  `require_run_message`, `deny_auto_apply`
+  `deny_auto_apply`
 - **3 that import `pia-common`** — `tags_required`, `naming_convention`,
   `resource_budget`. Chain is `naming.rego ← helpers.rego ← these three`. This is the
   AC #3 set: a change to `pia-common/naming.rego` must mark exactly these as changed.
@@ -39,16 +38,22 @@ The 20 policies:
   §4.3 of the analysis: carrying a non-deterministic result forward is a behaviour
   change) and `disabled_example` (flipping `enabled` is a manifest-only change with no
   `.rego` diff — AC #4).
+- **4 switched off for noise** — `allowed_resource_types` and `deny_null_resource`
+  duplicated each other on this plan; `require_random_pet` and `require_run_message` fire
+  on anything that isn't a scripted run against `pia-terraform`. Files kept, `enabled =
+  false` in the manifest with a reason on each. One edit to bring any of them back.
 
 Expected results against `pia-terraform` (6 resources: 2 `random_pet`, 1 `random_id`,
 1 `random_string`, 2 `null_resource`), all `advisory` so nothing blocks:
 
 | Always fails | Mixed by workspace | Always passes |
 |---|---|---|
-| `allowed_resource_types`, `deny_null_resource`, `max_resource_count`, `resource_budget` | `workspace_name_suffix`, `naming_convention`, `tags_required`, `require_run_message` | `require_random_pet`, `deny_destroy_actions`, `require_provider_allowlist`, `deny_destroy_run`, `deny_auto_apply`, `slow_scan_1..5` |
+| `max_resource_count`, `resource_budget` | `workspace_name_suffix`, `naming_convention`, `tags_required` | `deny_destroy_actions`, `require_provider_allowlist`, `deny_destroy_run`, `deny_auto_apply`, `slow_scan_1..5` |
 
-Mixed results matter: once the change ships, that's how you tell a freshly evaluated cell
-from a carried-forward one.
+Two always-red and three workspace-dependent is the minimum worth keeping. Turn off any
+more and the matrix goes uniformly green, at which point a carried-forward result and a
+freshly evaluated one look identical — which is exactly what the UI work in AC #2 has to
+be able to distinguish.
 
 Leave the group on the default `execute_as = policy-check` (post-plan). On a `pre-plan`
 group `input.tfplan` is the empty string (`policy_input.py:317`), so every
@@ -73,7 +78,7 @@ policy group, not just one policy.
 
 It verifies manifest keys against files both ways, runs `opa check` over the policies and
 `pia-common` together, evaluates every policy against both fixtures, and times the
-`slow_scan_*` set. Expected: `pia-01-dev` fails 4 policies, `pia-05` fails 8.
+`slow_scan_*` set. Expected: `pia-01-dev` fails 2 policies, `pia-05` fails 5.
 
 ### 1. Push the fixture
 
@@ -186,7 +191,7 @@ Verify before going further:
 ./scripts/pia-sql.sh visible acc-svrcncgh453bi8g
 ```
 
-Every row must show `in_pia_scope = YES`. 10 workspaces × 18 enabled policies = 180 cells.
+Every row must show `in_pia_scope = YES`. 10 workspaces × 14 enabled policies = 140 cells.
 
 Wait for all ten plans to finish before moving on. A run still planning has no
 `latest_planned_run` yet, so creating the policy group now would give you a baseline over
@@ -261,8 +266,8 @@ git commit -am "one-line comment change to a single policy" && git push
 ./scripts/pia-sql.sh checks pgrp-...
 ```
 
-**`cells` and `policies_per_run` will be identical between the two rows** — 180 both
-times, ~18 policies per run — and `wall_seconds` roughly the same, for a commit that
+**`cells` and `policies_per_run` will be identical between the two rows** — 140 both
+times, ~14 policies per run — and `wall_seconds` roughly the same, for a commit that
 changed a comment in one file. That row pair is the evidence for the ticket.
 
 Worker log while it runs:
@@ -283,7 +288,7 @@ git commit -am "touch a non-policy file inside the policy path" && git push
 ```
 
 `notes.txt` isn't in the manifest, so nothing about the policy group changed.
-`_has_changes_in_path` only compares path prefixes, so the webhook passes and all 180
+`_has_changes_in_path` only compares path prefixes, so the webhook passes and all 140
 cells are recomputed. This is AC #5's target.
 
 **Negative control** — touch `/README.md` at the repo root, push. No new group check;
@@ -299,7 +304,7 @@ git commit -am "add -qa suffix to shared naming helper" && git push
 
 No `.rego` under `pia-repro/` changed, yet `tags_required`, `naming_convention` and
 `resource_budget` must all be re-evaluated — they reach `naming` transitively through
-`helpers`. Today all 18 run, so it "works" by accident. After the change, the correct
+`helpers`. Today all 14 run, so it "works" by accident. After the change, the correct
 answer is exactly 3, and a dependency graph that stops at direct imports would wrongly
 give 0. Keep this case in the regression test.
 

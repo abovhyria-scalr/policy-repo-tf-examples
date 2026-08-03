@@ -34,10 +34,10 @@
 # That cap does not affect the real fixture; Scalr runs OPA in its own container.
 #
 # WHY THIS MATTERS FOR SCALRCORE-38740
-# Scalr checks every enabled policy against every workspace run. The fixture has 18
+# Scalr checks every enabled policy against every workspace run. The fixture has 14
 # enabled policies and the setup script makes 10 workspaces:
 #
-#     18 policies x 10 runs = 180 evaluations
+#     14 policies x 10 runs = 140 evaluations
 #
 # Change one comment in one policy file and Scalr still performs all 180. The ticket asks
 # for 10 instead (one changed policy x ten runs).

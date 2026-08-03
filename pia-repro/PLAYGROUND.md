@@ -43,7 +43,7 @@ So the fixture solves both:
 
 | What I added | Why |
 |---|---|
-| `pia-repro/` with **20 rules in one group** | so "one changed rule out of 18 enabled" is a real ratio |
+| `pia-repro/` with **20 rules in one group, 14 enabled** | so "one changed rule out of 14" is a real ratio |
 | `slow_scan_1..5` — 5 rules that do pointless heavy math | so 10 workspaces feel like 500. Substituting compute for scale is the only way to see the cost on a small test env |
 | `pia-common/` — shared helper code, kept **outside** the rules folder | the ticket says a rule must be re-checked if *shared code it depends on* changed, even when the rule file itself is untouched. Three rules depend on this folder, so you can test exactly that |
 | `pia-terraform/` — 6 fake resources, no cloud, no cost | PIA needs workspaces with real OpenTofu plans to check against. `random_pet` and `null_resource` create nothing real |
@@ -91,12 +91,13 @@ That last point is exactly why validating in the Playground is worth your time.
 
 ## Part 3 — the actual checks
 
-The Playground has one editor and one package. The fixture is 20 separate files that Scalr
-loads one at a time. So I flattened 13 of them into a single paste-able file. The
-flattening only renames things and inlines the shared helpers — no logic changed. There's
-a comment block at the top of the file explaining both edits.
+The Playground has one editor and one package. The fixture is 20 separate files, 14 of
+them enabled, that Scalr loads one at a time. So I flattened the 9 enabled non-slow ones
+into a single paste-able file. The flattening only renames things and inlines the shared
+helpers — no logic changed. There's a comment block at the top of the file explaining
+both edits.
 
-### Check A — do all 13 rules behave correctly? (5 minutes)
+### Check A — do all 9 rules behave correctly? (5 minutes)
 
 1. Confirm the **`Rego (v1)`** dropdown in the toolbar says v1. It does in your screenshot.
 2. Open `pia-repro/testdata/playground-all.rego`, copy the whole thing, replace everything
@@ -105,24 +106,16 @@ a comment block at the top of the file explaining both edits.
    panel.
 4. Click **Evaluate**.
 
-**Expected: `deny` contains exactly 10 messages.** Every message starts with the name of
+**Expected: `deny` contains exactly 5 messages.** Every message starts with the name of
 the rule that produced it:
 
 ```
-allowed_resource_types: null_resource.deploy has type "null_resource" ...
-allowed_resource_types: null_resource.migrate has type "null_resource" ...
-deny_null_resource: null_resource.deploy uses null_resource
-deny_null_resource: null_resource.migrate uses null_resource
 max_resource_count: 6 resource changes exceeds the limit of 4
 workspace_name_suffix: workspace "pia-05" must end with -dev, -stg or -prod
-require_run_message: run message "wip" is too short
 tags_required: workspace "pia-05" is missing tags ["owner", "cost-center"]
 naming_convention: workspace "pia-05" must end with one of ["-dev", "-stg", "-prod"]
 resource_budget: 2 x null_resource exceeds the budget of 1
 ```
-
-10 messages from 8 distinct rules — two rules fire twice because there are two
-`null_resource` in the plan.
 
 **Ignore the OUTPUT keys that aren't `deny`.** You'll also see `allowed_types`,
 `h_workspace_name`, `h_created_resources` and so on. The Playground prints every rule in
@@ -132,12 +125,11 @@ debugging, but it isn't a result.
 
 5. Now swap the INPUT for `input-pia-01-dev.json` and Evaluate again.
 
-**Expected: exactly 6 messages, from 4 rules** — only `allowed_resource_types` (×2),
-`deny_null_resource` (×2), `max_resource_count` and `resource_budget`.
+**Expected: exactly 2 messages** — `max_resource_count` and `resource_budget`.
 
-The four that disappeared — `workspace_name_suffix`, `require_run_message`,
-`tags_required`, `naming_convention` — are the point of having two fixtures. That workspace
-is named `pia-01-dev`, is tagged, and has a proper run message, so those four pass.
+The three that disappeared — `workspace_name_suffix`, `tags_required`,
+`naming_convention` — are the point of having two fixtures. That workspace is named
+`pia-01-dev` and is tagged, so those three pass.
 
 **If both counts match, the fixture is correct** and you can push it. If a rule you
 expected is missing, it's almost certainly the undefined-field trap from Part 2, not a
@@ -145,15 +137,14 @@ logic bug.
 
 #### About the LINT panel
 
-The **LINT** panel will show **3 `style/messy-rule` violations**, and that is expected.
+The **LINT** panel will show **2 `style/messy-rule` violations**, and that is expected.
 
 These are style suggestions from Regal, not errors — the policy evaluates fine, and Scalr
 does not run Regal. "Messy incremental rule" means the several `deny` definitions aren't
-adjacent in the file: each one is separated from the next by a constant belonging to its
-original rule (`max_resources := 4`, `allowed_providers := {…}`,
-`resource_budget_limits := {…}`).
+adjacent in the file: they are separated by constants belonging to their original rules
+(`allowed_providers := {…}`, `resource_budget_limits := {…}`).
 
-That's purely an artifact of flattening 13 files into one. In the real fixture each `deny`
+That's purely an artifact of flattening 9 files into one. In the real fixture each `deny`
 sits alone in its own file, so the lint doesn't apply there. Silencing it here would mean
 hoisting all the constants to the top and losing the one-section-per-original-file layout
 that makes this harness readable — not worth it.
@@ -231,6 +222,6 @@ instead, the message on the group will name the bad import.
 | `undefined function data.pia...` | you pasted a fixture file from `pia-repro/` instead of `playground-all.rego`. Those reference the separate helper folder |
 | Check B output is empty, or the Playground hangs | evaluation cap — lower `work`. Also check your copy has `hits`, not `pairs` |
 | Way more messages than expected | check you replaced the INPUT panel, not appended to it |
-| 3 `style/messy-rule` lint violations | expected — see the LINT section above |
+| 2 `style/messy-rule` lint violations | expected — see the LINT section above |
 
 Next step once both checks pass: `pia-repro/README.md`, step 1 onwards.

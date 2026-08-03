@@ -1,7 +1,13 @@
 # Policy group manifest for the SCALRCORE-38740 repro.
 #
-# 20 policies in ONE group. That is the point: today a one-line change to any single
-# .rego file re-evaluates all 18 enabled ones against every run in scope.
+# 20 policies in ONE group, 14 of them enabled. That is the point: today a one-line change
+# to any single .rego file re-evaluates all 14 against every run in scope.
+#
+# Six are enabled = false. Two are deliberate caveat demos (see the bottom of this file);
+# four were switched off because they produced noise without adding signal -- each carries
+# a comment saying why. Disabled rather than deleted so they are one edit away from
+# returning, and because toggling `enabled` is itself a manifest-only change, which is the
+# AC #4 case: no .rego diff, but the policy set changed.
 #
 # Everything is advisory so nothing blocks a run while you experiment. Flip individual
 # policies to soft-mandatory / hard-mandatory only if you want to test enforcement.
@@ -13,13 +19,17 @@ version = "v1"
 
 # --- cheap, self-contained (10) ---------------------------------------------------
 
+# OFF: duplicates deny_null_resource on this fixture -- both fire on the same two resources.
+#    Flip enabled back to true to restore it.
 policy "allowed_resource_types" {
-  enabled           = true
+  enabled           = false
   enforcement_level = "advisory"
 }
 
+# OFF: noisy. max_resource_count and resource_budget still provide always-red rows.
+#    Flip enabled back to true to restore it.
 policy "deny_null_resource" {
-  enabled           = true
+  enabled           = false
   enforcement_level = "advisory"
 }
 
@@ -33,8 +43,10 @@ policy "workspace_name_suffix" {
   enforcement_level = "advisory"
 }
 
+# OFF: only meaningful against pia-terraform. Fires on any other config, which is noise.
+#    Flip enabled back to true to restore it.
 policy "require_random_pet" {
-  enabled           = true
+  enabled           = false
   enforcement_level = "advisory"
 }
 
@@ -53,8 +65,10 @@ policy "deny_destroy_run" {
   enforcement_level = "advisory"
 }
 
+# OFF: fires on every run queued from the UI, since those have an empty message.
+#    Flip enabled back to true to restore it.
 policy "require_run_message" {
-  enabled           = true
+  enabled           = false
   enforcement_level = "advisory"
 }
 
